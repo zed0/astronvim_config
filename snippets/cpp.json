@@ -1,0 +1,178 @@
+{
+  "debug": {
+    "prefix": ["_debug"],
+    "body": [
+      "std::cout << __FILE__ << \":\" << __LINE__ << \": Value of $1: \" << $1 << std::endl;"
+    ],
+    "description": "Print variable"
+  },
+  "line": {
+    "prefix": ["_line"],
+    "body": [
+      "std::cout << __FILE__ << \":\" << __LINE__ << \": \" << __PRETTY_FUNCTION__ << std::endl;"
+    ],
+    "description": "Print line number"
+  },
+  "constructors": {
+    "prefix": ["_constructors"],
+    "body": [
+      "$1() = default;",
+      "$1($1&&) = default;",
+      "$1& operator=($1&&) = default;",
+      "$1(const $1&) = default;",
+      "$1& operator=(const $1&) = default;",
+      "~$1() = default;"
+    ],
+    "description": "All constructors for a C++ class"
+  },
+  "starttime": {
+    "prefix": ["_starttime"],
+    "body": [
+      "const auto start_time = std::chrono::system_clock::now();"
+    ],
+    "description": "Start a timer"
+  },
+  "endtime": {
+    "prefix": ["_endtime"],
+    "body": [
+	    "const auto end_time = std::chrono::system_clock::now();",
+	    "const auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();",
+	    "std::ostringstream oss;",
+	    "oss << std::setfill('0')          // set field fill character to '0'",
+		  "  << (duration % 1000000000) / 1000000 // format seconds",
+		  "  << \":\"",
+		  "  << std::setw(3)               // set width of milliseconds field",
+		  "  << (duration % 1000000) / 1000       // format milliseconds",
+		  "  << \":\"",
+		  "  << std::setw(3)               // set width of microseconds field",
+		  "  << duration % 1000;                  // format microseconds",
+	    "auto formatted(oss.str());",
+	    "std::cout << __FILE__ << \":\" << __LINE__ << \": \" << formatted << std::endl;"
+    ],
+    "description": "Stop timer and print time since start"
+  },
+  "jsondb": {
+    "prefix": ["_jsondb"],
+    "body": [
+      "std::cout << __FILE__ << \":\" << __LINE__ << \": Value of $1: \" << pa::json::encode($1) << std::endl;"
+    ],
+    "description": "Print json encoded variable"
+  },
+  "querydb": {
+    "prefix": ["_querydb"],
+    "body": [
+      "{",
+	    "  auto prev_position = $1.at();",
+	    "  $1.seek(-1);",
+	    "  auto rec = $1.record();",
+	    "  std::cout << __FILE__ << \":\" << __LINE__ << \":\" << std::endl;",
+	    "  QMapIterator<QString, QVariant> boundValues($1.boundValues());",
+	    "  while(boundValues.hasNext())",
+	    "  {",
+		  "    boundValues.next();",
+		  "    std::cout << boundValues.key().toStdString() << \": \" << boundValues.value().toString().toStdString() << std::endl;",
+	    "  }",
+	    "  std::cout << \"Number of rows: \" << $1.size() << std::endl;",
+	    "  std::cout << \"Number of columns: \" << rec.count() << std::endl;",
+	    "  int i = 0;",
+	    "  while($1.next())",
+	    "  {",
+		  "    ++i;",
+		  "    std::cout << \"row \" << i << \":\";",
+		  "    for(int j=0; j<rec.count(); ++j)",
+		  "    {",
+			"      std::cout << \"\t\" << rec.fieldName(j).toStdString() << \": \";",
+			"      if($1.value(j).isNull())",
+			"       std::cout << \"NULL\";",
+			"      else",
+			"       std::cout << $1.value(j).toString().toStdString();",
+			"      std::cout << \";\";",
+		  "    }",
+		  "    std::cout << std::endl;",
+	    "  }",
+	    "  $1.seek(prev_position);",
+      "}"
+    ],
+    "description": "Print result of latest query"
+  },
+  "execdb": {
+    "prefix": ["_execdb"],
+    "body": [
+      "{",
+	    "  QSqlQuery temp_query($1);",
+	    "  temp_query.prepare(R\"SQL(",
+		  "    $2",
+	    "  )SQL\");",
+	    "  {",
+		  "    pa::db::exec(temp_query);",
+		  "    auto prev_position = temp_query.at();",
+		  "    temp_query.seek(-1);",
+		  "    auto rec = temp_query.record();",
+		  "    std::cout << __FILE__ << \":\" << __LINE__ << \":\" << std::endl;",
+		  "    std::cout << \"Number of rows: \" << temp_query.size() << std::endl;",
+		  "    std::cout << \"Number of columns: \" << rec.count() << std::endl;",
+		  "    int i = 0;",
+		  "    while(temp_query.next())",
+		  "    {",
+			"      ++i;",
+			"      std::cout << \"row \" << i << \":\";",
+			"      for(int j=0; j<rec.count(); ++j)",
+			"      {",
+			"       std::cout << \"\t\" << rec.fieldName(j).toStdString() << \": \";",
+			"       if(temp_query.value(j).isNull())",
+			"         std::cout << \"NULL\";",
+			"       else",
+			"         std::cout << temp_query.value(j).toString().toStdString();",
+			"       std::cout << \";\";",
+			"      }",
+			"      std::cout << std::endl;",
+		  "    }",
+		  "    temp_query.seek(prev_position);",
+	    "  }",
+      "}"
+    ],
+    "description": "Print result of arbitrary query"
+  },
+  "guard": {
+    "prefix": ["_guard"],
+    "body": [
+      "#ifndef ${3:${RELATIVE_FILEPATH/([^\\/\\.]*)(\\/|\\.)*/${1:/upcase}${2:+_}/g}_INCLUDED}",
+      "#define $3",
+      "",
+      "$0",
+      "",
+      "#endif // $3"
+    ],
+    "description": "C++ header guard"
+
+  },
+  "serialbase": {
+    "prefix": ["_serialbase"],
+    "body": [
+      "struct $1 : pa::serialise2::base<$1>",
+      "{",
+	    "  typedef pa::db::database_id<$1> id_type;",
+      "  PA_SERIALISE2_ATTRIBUTES_FWD();",
+      "  PA_SERIALISE2_FIELD_FWD(id_type, id);",
+      "};"
+    ],
+    "description": "Serialise 2 base"
+  },
+  "serialimpl": {
+    "prefix": ["_serialimpl"],
+    "body": [
+      "PA_SERIALISE2_ATTRIBUTES_IMPL(",
+      "  $1,",
+      "  \"${1/::/_/g}\",",
+      "  pa::db::a::table_name(\"${1/.*::(.*)/$1/}s\")",
+      ");",
+      "",
+      "PA_SERIALISE2_FIELD_IMPL(",
+      "  $1,",
+      "  id,",
+      "  pa::db::a::column_name(\"${1/.*::(.*)/$1/}_id\")",
+      ");"
+    ],
+    "description": "Serialise 2 base"
+  }
+}

@@ -31,7 +31,7 @@ return {
     formatting = {
       -- control auto formatting on save
       format_on_save = {
-        enabled = true, -- enable or disable format on save globally
+        enabled = false, -- enable or disable format on save globally
         allow_filetypes = { -- enable format on save for specified filetypes only
           -- "go",
         },
@@ -51,6 +51,48 @@ return {
     -- enable servers that you already have installed without mason
     servers = {
       -- "pyright"
+    },
+    config = {
+        -- example for addings schemas to yamlls
+        -- yamlls = { -- override table for require("lspconfig").yamlls.setup({...})
+        --   settings = {
+        --     yaml = {
+        --       schemas = {
+        --         ["http://json.schemastore.org/github-workflow"] = ".github/workflows/*.{yml,yaml}",
+        --         ["http://json.schemastore.org/github-action"] = ".github/action.{yml,yaml}",
+        --         ["http://json.schemastore.org/ansible-stable-2.9"] = "roles/tasks/*.{yml,yaml}",
+        --       },
+        --     },
+        --   },
+        -- },
+        clangd = {
+            --cmd = { "/home/zed0/src/boron/scripts/dev/clangd" },
+            cmd = {
+                "clangd",
+                "--path-mappings=/home/zed0/src/boron=/usr/share/app",
+            },
+            capabilities = {
+                offsetEncoding = "utf-8" 
+            }
+        },
+        ccls = {
+            init_options = {
+                cache = {
+                    directory = "/tmp/ccls",
+                },
+                compilationDatabaseDirectory = "build",
+                index = {
+                    threads = 6,
+                },
+                clang = {
+                    pathMappings = {
+                        "/usr/share/app/>/home/zed0/src/boron/",
+                    },
+                },
+                --client = { snippetSupport = true },
+                --highlight = { lsRanges = true }
+            },
+        },
     },
   },
 
@@ -81,5 +123,24 @@ return {
     --     ["~/%.config/foo/.*"] = "fooscript",
     --   },
     -- }
+
+    -- Disable search highlights disappearing when navigating
+    vim.on_key(nil, vim.api.nvim_get_namespaces()["auto_hlsearch"])
+
+    -- Fix telescope jumping to insert mode when opening a file
+    local original_edit = require("telescope.actions.set").edit
+    require("telescope.actions.set").edit = function(...)
+      original_edit(...)
+      vim.cmd.stopinsert()
+    end
+
+    local dap = require('dap')
+    dap.adapters.cppdbg = {
+      id = 'cppdbg',
+      type = 'executable',
+      command = os.getenv('HOME')..'/.local/share/vscode-cpptools/extension/debugAdapters/bin/OpenDebugAD7',
+      -- command = os.getenv('HOME')..'/home/zed0/.local/share/nvim/mason/packages/cpptools/extension/debugAdapters/bin/OpenDebugAD7',
+    }
+    require('dap.ext.vscode').load_launchjs(nil, { cppdbg = {'c', 'cpp'} })
   end,
 }

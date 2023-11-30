@@ -20,6 +20,19 @@ return {
     ["<leader>b"] = { name = "Buffers" },
     -- quick save
     -- ["<C-s>"] = { ":w!<cr>", desc = "Save File" },  -- change description but the same command
+		["gh"] = { "<cmd>ClangdSwitchSourceHeader<cr>", desc = "Switch between .h and .cpp" },
+		["gsh"] = { "<cmd>:sp<cr><cmd>ClangdSwitchSourceHeader<cr>", desc = "Split with .h/.cpp" },
+		["]q"] = { "<cmd>cnext<cr>", desc = "Next quickfix result" },
+		["[q"] = { "<cmd>cprevious<cr>", desc = "Previous quickfix result" },
+		["gS"] = { "<cmd>:TSJSplit<cr><bar>:retab!<cr>", desc = "Split line" },
+		["gJ"] = { "<cmd>:TSJJoin<cr><bar>:retab!<cr>", desc = "Join line" },
+    ["L"] = { "gt" },
+    ["H"] = { "gT" },
+
+    ["<leader>h"] = { function() vim.opt.hlsearch = not(vim.opt.hlsearch:get()) end, desc = "Toggle search highlight"},
+
+    -- LSP hover
+    ["<leader>lH"] = { function() vim.lsp.buf.hover() end, desc = "Hover information"},
   },
   t = {
     -- setting a mapping to false will disable it
